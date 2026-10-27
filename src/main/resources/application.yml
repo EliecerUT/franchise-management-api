@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: franchises-api
+  mongodb:
+    # Se puede sobrescribir con la variable de entorno MONGODB_URI (p. ej. un cluster en la nube)
+    uri: ${MONGODB_URI:mongodb://localhost:27017/franchises}
+
+server:
+  port: ${PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
