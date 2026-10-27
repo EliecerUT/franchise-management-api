@@ -47,6 +47,24 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheFranchiseEndpoints() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath("$.paths['/api/v1/franchises'].post.tags[0]").value("Franquicias"))
+                .andExpect(jsonPath("$.paths['/api/v1/franchises'].post.responses['201'].headers.Location").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/franchises'].post.responses['201'].content['application/json'].schema.$ref")
+                        .value("#/components/schemas/FranchiseResponse"))
+                .andExpect(jsonPath("$.paths['/api/v1/franchises'].post.responses['400'].$ref")
+                        .value("#/components/responses/BadRequest"))
+                .andExpect(jsonPath("$.paths['/api/v1/franchises'].post.responses['409'].$ref")
+                        .value("#/components/responses/Conflict"))
+                .andExpect(jsonPath("$.paths['/api/v1/franchises/{franchiseId}'].get.responses['404'].$ref")
+                        .value("#/components/responses/NotFound"))
+                .andExpect(jsonPath("$.components.schemas.CreateFranchiseRequest.required").value(hasItems("name")))
+                .andExpect(jsonPath("$.components.schemas.CreateFranchiseRequest.properties.name.example")
+                        .value("Burger Express"));
+    }
+
+    @Test
     void servesSwaggerUi() throws Exception {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk());
