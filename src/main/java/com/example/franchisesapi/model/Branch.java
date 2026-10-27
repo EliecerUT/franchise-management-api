@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,6 +73,15 @@ public class Branch {
 
     public boolean removeProduct(String productId) {
         return products.removeIf(product -> product.getId().equals(productId));
+    }
+
+    /**
+     * Producto con más stock de la sucursal; vacío si no tiene productos.
+     * En caso de empate gana el que se agregó primero.
+     */
+    public Optional<Product> findTopStockProduct() {
+        return products.stream()
+                .max(Comparator.comparingInt(Product::getStock));
     }
 
 }

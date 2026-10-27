@@ -87,6 +87,30 @@ class FranchiseTest {
     }
 
     @Test
+    void findTopStockProductReturnsTheProductWithMostStock() {
+        Product fries = Product.builder().id("p1").name("Papas").stock(10).build();
+        Product soda = Product.builder().id("p2").name("Gaseosa").stock(30).build();
+        Product burger = Product.builder().id("p3").name("Hamburguesa").stock(20).build();
+        Branch branch = Branch.builder().id("b1").name("Centro").products(List.of(fries, soda, burger)).build();
+
+        assertThat(branch.findTopStockProduct()).contains(soda);
+    }
+
+    @Test
+    void findTopStockProductKeepsTheFirstProductOnATie() {
+        Product fries = Product.builder().id("p1").name("Papas").stock(30).build();
+        Product soda = Product.builder().id("p2").name("Gaseosa").stock(30).build();
+        Branch branch = Branch.builder().id("b1").name("Centro").products(List.of(fries, soda)).build();
+
+        assertThat(branch.findTopStockProduct()).contains(fries);
+    }
+
+    @Test
+    void findTopStockProductIsEmptyForABranchWithoutProducts() {
+        assertThat(Branch.builder().id("b1").name("Centro").build().findTopStockProduct()).isEmpty();
+    }
+
+    @Test
     void productIsLowStockWhenStockReachesTheMinimum() {
         assertThat(Product.builder().stock(5).minimumStock(10).build().isLowStock()).isTrue();
         assertThat(Product.builder().stock(10).minimumStock(10).build().isLowStock()).isTrue();
