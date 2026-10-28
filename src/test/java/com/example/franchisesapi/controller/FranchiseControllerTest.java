@@ -1,10 +1,12 @@
 package com.example.franchisesapi.controller;
 
 import com.example.franchisesapi.dto.CreateFranchiseRequest;
+import com.example.franchisesapi.dto.TopStockProductResponse;
 import com.example.franchisesapi.exception.DuplicateResourceException;
 import com.example.franchisesapi.exception.ResourceNotFoundException;
 import com.example.franchisesapi.model.Address;
 import com.example.franchisesapi.model.Branch;
+import com.example.franchisesapi.model.BranchStatus;
 import com.example.franchisesapi.model.Franchise;
 import com.example.franchisesapi.model.Product;
 import com.example.franchisesapi.service.FranchiseService;
@@ -151,6 +153,34 @@ class FranchiseControllerTest {
         when(franchiseService.getById("missing")).thenThrow(ResourceNotFoundException.franchise("missing"));
 
         mockMvc.perform(get("/api/v1/franchises/missing"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getTopStockProductsReturnsTheProductAndItsBranch() throws Exception {
+        when(franchiseService.getTopStockProducts("f1")).thenReturn(List.of(
+                new TopStockProductResponse("b1", "BOG-001", "Centro", BranchStatus.OPEN,
+                        "p2", "GAS-001", "Gaseosa", "Bebidas", 30, 5, false),
+                new TopStockProductResponse("b3", "BOG-002", "Norte", BranchStatus.TEMPORARILY_CLOSED,
+                        "p3", "HEL-001", "Helado", "Postres", 5, 8, true)));
+
+        mockMvc.perform(get("/api/v1/franchises/f1/top-stock-products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].branchCode").value("BOG-001"))
+                .andExpect(jsonPath("$[0].branchName").value("Centro"))
+                .andExpect(jsonPath("$[0].productName").value("Gaseosa"))
+                .andExpect(jsonPath("$[0].sku").value("GAS-001"))
+                .andExpect(jsonPath("$[0].stock").value(30))
+                .andExpect(jsonPath("$[1].branchStatus").value("TEMPORARILY_CLOSED"))
+                .andExpect(jsonPath("$[1].lowStock").value(true));
+    }
+
+    @Test
+    void getTopStockProductsOfUnknownFranchiseReturns404() throws Exception {
+        when(franchiseService.getTopStockProducts("missing")).thenThrow(ResourceNotFoundException.franchise("missing"));
+
+        mockMvc.perform(get("/api/v1/franchises/missing/top-stock-products"))
                 .andExpect(status().isNotFound());
     }
 

@@ -3,6 +3,7 @@ package com.example.franchisesapi.controller;
 import com.example.franchisesapi.config.OpenApiConfig;
 import com.example.franchisesapi.dto.CreateFranchiseRequest;
 import com.example.franchisesapi.dto.FranchiseResponse;
+import com.example.franchisesapi.dto.TopStockProductResponse;
 import com.example.franchisesapi.model.Franchise;
 import com.example.franchisesapi.service.FranchiseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +66,19 @@ public class FranchiseController {
             @Parameter(description = "Id de la franquicia", example = "6ae0375cc698e94971e2fce3")
             @PathVariable String franchiseId) {
         return FranchiseResponse.from(franchiseService.getById(franchiseId));
+    }
+
+    @GetMapping("/{franchiseId}/top-stock-products")
+    @Operation(summary = "Producto con más stock de cada sucursal de una franquicia",
+            description = "Devuelve un elemento por sucursal con el producto de mayor stock y la sucursal a la que "
+                    + "pertenece. Las sucursales sin productos no aparecen; en caso de empate gana el producto "
+                    + "agregado primero.")
+    @ApiResponse(responseCode = "200", description = "Reporte de stock por sucursal")
+    @ApiResponse(responseCode = "404", ref = OpenApiConfig.NOT_FOUND_RESPONSE)
+    public List<TopStockProductResponse> getTopStockProducts(
+            @Parameter(description = "Id de la franquicia", example = "6ae0375cc698e94971e2fce3")
+            @PathVariable String franchiseId) {
+        return franchiseService.getTopStockProducts(franchiseId);
     }
 
 }

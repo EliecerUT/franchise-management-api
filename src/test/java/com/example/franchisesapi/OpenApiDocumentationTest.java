@@ -94,6 +94,16 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheTopStockReport() throws Exception {
+        String report = "$.paths['/api/v1/franchises/{franchiseId}/top-stock-products'].get";
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(report + ".tags[0]").value("Franquicias"))
+                .andExpect(jsonPath(report + ".responses['200'].content['application/json'].schema.items.$ref")
+                        .value("#/components/schemas/TopStockProductResponse"))
+                .andExpect(jsonPath(report + ".responses['404'].$ref").value("#/components/responses/NotFound"));
+    }
+
+    @Test
     void servesSwaggerUi() throws Exception {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk());

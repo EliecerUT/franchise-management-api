@@ -1,6 +1,7 @@
 package com.example.franchisesapi.service;
 
 import com.example.franchisesapi.dto.CreateFranchiseRequest;
+import com.example.franchisesapi.dto.TopStockProductResponse;
 import com.example.franchisesapi.exception.DuplicateResourceException;
 import com.example.franchisesapi.exception.ResourceNotFoundException;
 import com.example.franchisesapi.model.Franchise;
@@ -57,6 +58,18 @@ public class FranchiseService {
     public Franchise getById(String franchiseId) {
         return franchiseRepository.findById(franchiseId)
                 .orElseThrow(() -> ResourceNotFoundException.franchise(franchiseId));
+    }
+
+    /**
+     * Producto con más stock de cada sucursal de la franquicia, en el orden de las sucursales.
+     * Las sucursales sin productos no aparecen en el resultado.
+     */
+    public List<TopStockProductResponse> getTopStockProducts(String franchiseId) {
+        return getById(franchiseId).getBranches().stream()
+                .flatMap(branch -> branch.findTopStockProduct()
+                        .map(product -> TopStockProductResponse.from(branch, product))
+                        .stream())
+                .toList();
     }
 
 }
