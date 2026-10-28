@@ -182,6 +182,34 @@ class FranchisesApiIntegrationTest {
     }
 
     @Test
+    void renamingABranchKeepsItsProducts() {
+        FranchiseResponse franchise = createFranchise(franchiseNamed("Burger"));
+        String franchiseUrl = FRANCHISES + "/" + franchise.id();
+        BranchResponse center = createBranch(franchiseUrl, branchNamed("Centro", "BOG-001"));
+        createBranch(franchiseUrl, branchNamed("Norte", "BOG-002"));
+        String centerUrl = franchiseUrl + "/branches/" + center.id();
+        createProduct(centerUrl + "/products", product("Papas", "PAP-001", "7500.00", 10));
+
+        client.patch().uri(centerUrl + "/name")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("Centro Histórico"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.name").isEqualTo("Centro Histórico")
+                .jsonPath("$.code").isEqualTo("BOG-001")
+                .jsonPath("$.products[0].name").isEqualTo("Papas");
+        client.patch().uri(centerUrl + "/name")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("norte"))
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        assertThat(franchiseRepository.findById(franchise.id()).orElseThrow()
+                .findBranch(center.id()).orElseThrow().getName()).isEqualTo("Centro Histórico");
+    }
+
+    @Test
     void closedBranchDoesNotAcceptProducts() {
         FranchiseResponse franchise = createFranchise(franchiseNamed("Burger"));
         BranchResponse closed = createBranch(FRANCHISES + "/" + franchise.id(),

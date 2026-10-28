@@ -86,6 +86,12 @@ public class Franchise {
                 .anyMatch(branch -> branch.getName().equalsIgnoreCase(branchName));
     }
 
+    /** Para renombrar: busca el nombre en las demás sucursales, sin contar la que se renombra. */
+    public boolean hasOtherBranchNamed(String branchId, String branchName) {
+        return branches.stream()
+                .anyMatch(branch -> !branch.getId().equals(branchId) && branch.getName().equalsIgnoreCase(branchName));
+    }
+
     public boolean hasBranchWithCode(String branchCode) {
         return branchCode != null && branches.stream()
                 .anyMatch(branch -> branchCode.equalsIgnoreCase(branch.getCode()));

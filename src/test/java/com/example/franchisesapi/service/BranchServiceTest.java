@@ -131,6 +131,45 @@ class BranchServiceTest {
                 .hasMessage("Branch 'missing' not found");
     }
 
+    @Test
+    void updateNameStoresTheNormalizedNameAndTouchesUpdatedAt() {
+        Branch center = Branch.builder().id("b1").name("Centro").updatedAt(Instant.parse("2026-01-01T00:00:00Z")).build();
+        Franchise franchise = Franchise.builder().id("f1").name("Burger")
+                .branches(new ArrayList<>(List.of(center))).build();
+        when(franchiseService.getById("f1")).thenReturn(franchise);
+
+        Branch updated = branchService.updateName("f1", "b1", "  Centro Histórico ");
+
+        assertThat(updated.getName()).isEqualTo("Centro Histórico");
+        assertThat(updated.getUpdatedAt()).isEqualTo(NOW);
+        verify(franchiseRepository).save(franchise);
+    }
+
+    @Test
+    void updateNameRejectsTheNameOfAnotherBranch() {
+        Franchise franchise = Franchise.builder().id("f1").name("Burger")
+                .branches(new ArrayList<>(List.of(
+                        Branch.builder().id("b1").name("Centro").build(),
+                        Branch.builder().id("b2").name("Norte").build())))
+                .build();
+        when(franchiseService.getById("f1")).thenReturn(franchise);
+
+        assertThatThrownBy(() -> branchService.updateName("f1", "b1", "norte"))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Branch 'norte' already exists in franchise 'Burger'");
+        verify(franchiseRepository, never()).save(any());
+    }
+
+    @Test
+    void updateNameOfUnknownBranchThrows() {
+        when(franchiseService.getById("f1")).thenReturn(Franchise.builder().id("f1").name("Burger").build());
+
+        assertThatThrownBy(() -> branchService.updateName("f1", "missing", "Centro"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Branch 'missing' not found");
+        verify(franchiseRepository, never()).save(any());
+    }
+
     private static CreateBranchRequest nameAndCode(String name, String code) {
         return new CreateBranchRequest(name, code, null, null, null, null, null, null);
     }

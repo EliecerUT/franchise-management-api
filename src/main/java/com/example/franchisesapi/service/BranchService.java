@@ -71,8 +71,30 @@ public class BranchService {
     }
 
     public Branch getById(String franchiseId, String branchId) {
-        return franchiseService.getById(franchiseId)
-                .findBranch(branchId)
+        return findBranch(franchiseService.getById(franchiseId), branchId);
+    }
+
+    /**
+     * Cambia el nombre de la sucursal. Se permite cambiar solo las mayúsculas del propio nombre,
+     * pero no usar el de otra sucursal de la misma franquicia.
+     */
+    public Branch updateName(String franchiseId, String branchId, String newName) {
+        Franchise franchise = franchiseService.getById(franchiseId);
+        Branch branch = findBranch(franchise, branchId);
+        String name = text(newName);
+        if (franchise.hasOtherBranchNamed(branchId, name)) {
+            throw new DuplicateResourceException(
+                    "Branch '%s' already exists in franchise '%s'".formatted(name, franchise.getName()));
+        }
+
+        branch.setName(name);
+        branch.setUpdatedAt(Instant.now(clock));
+        franchiseRepository.save(franchise);
+        return branch;
+    }
+
+    private static Branch findBranch(Franchise franchise, String branchId) {
+        return franchise.findBranch(branchId)
                 .orElseThrow(() -> ResourceNotFoundException.branch(branchId));
     }
 
