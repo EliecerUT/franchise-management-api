@@ -8,6 +8,7 @@ import com.example.franchisesapi.dto.CreateProductRequest;
 import com.example.franchisesapi.dto.FranchiseResponse;
 import com.example.franchisesapi.dto.ProductResponse;
 import com.example.franchisesapi.dto.TopStockProductResponse;
+import com.example.franchisesapi.dto.UpdateNameRequest;
 import com.example.franchisesapi.dto.UpdateStockRequest;
 import com.example.franchisesapi.model.BranchStatus;
 import com.example.franchisesapi.model.Franchise;
@@ -152,6 +153,32 @@ class FranchisesApiIntegrationTest {
                 .exchange()
                 .expectStatus().isEqualTo(409)
                 .expectBody().jsonPath("$.detail").isEqualTo("A franchise with tax id '900123456-7' already exists");
+    }
+
+    @Test
+    void renamingAFranchiseKeepsTheRestOfItsData() {
+        FranchiseResponse burger = createFranchise(
+                new CreateFranchiseRequest("Burger", null, "900123456-7", null, null, null, null));
+        createFranchise(franchiseNamed("Pizza"));
+        String renameUrl = FRANCHISES + "/" + burger.id() + "/name";
+
+        client.patch().uri(renameUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("Burger House"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.name").isEqualTo("Burger House")
+                .jsonPath("$.taxId").isEqualTo("900123456-7");
+        client.patch().uri(renameUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("PIZZA"))
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        Franchise stored = franchiseRepository.findById(burger.id()).orElseThrow();
+        assertThat(stored.getName()).isEqualTo("Burger House");
+        assertThat(stored.getUpdatedAt()).isAfter(stored.getCreatedAt());
     }
 
     @Test

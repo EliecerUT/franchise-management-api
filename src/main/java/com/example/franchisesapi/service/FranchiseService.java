@@ -61,6 +61,21 @@ public class FranchiseService {
     }
 
     /**
+     * Cambia el nombre comercial. Se permite cambiar solo las mayúsculas del propio nombre,
+     * pero no usar el de otra franquicia.
+     */
+    public Franchise updateName(String franchiseId, String newName) {
+        Franchise franchise = getById(franchiseId);
+        String name = text(newName);
+        if (franchiseRepository.existsByNameIgnoreCaseAndIdNot(name, franchiseId)) {
+            throw new DuplicateResourceException("Franchise '%s' already exists".formatted(name));
+        }
+
+        franchise.setName(name);
+        return franchiseRepository.save(franchise);
+    }
+
+    /**
      * Producto con más stock de cada sucursal de la franquicia, en el orden de las sucursales.
      * Las sucursales sin productos no aparecen en el resultado.
      */

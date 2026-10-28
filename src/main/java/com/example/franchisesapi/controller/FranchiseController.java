@@ -4,6 +4,7 @@ import com.example.franchisesapi.config.OpenApiConfig;
 import com.example.franchisesapi.dto.CreateFranchiseRequest;
 import com.example.franchisesapi.dto.FranchiseResponse;
 import com.example.franchisesapi.dto.TopStockProductResponse;
+import com.example.franchisesapi.dto.UpdateNameRequest;
 import com.example.franchisesapi.model.Franchise;
 import com.example.franchisesapi.service.FranchiseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -66,6 +68,20 @@ public class FranchiseController {
             @Parameter(description = "Id de la franquicia", example = "6ae0375cc698e94971e2fce3")
             @PathVariable String franchiseId) {
         return FranchiseResponse.from(franchiseService.getById(franchiseId));
+    }
+
+    @PatchMapping("/{franchiseId}/name")
+    @Operation(summary = "Modificar el nombre de una franquicia",
+            description = "El nuevo nombre debe ser único en toda la API, sin distinguir mayúsculas.")
+    @ApiResponse(responseCode = "200", description = "Nombre actualizado")
+    @ApiResponse(responseCode = "400", ref = OpenApiConfig.BAD_REQUEST_RESPONSE)
+    @ApiResponse(responseCode = "404", ref = OpenApiConfig.NOT_FOUND_RESPONSE)
+    @ApiResponse(responseCode = "409", ref = OpenApiConfig.CONFLICT_RESPONSE)
+    public FranchiseResponse updateName(
+            @Parameter(description = "Id de la franquicia", example = "6ae0375cc698e94971e2fce3")
+            @PathVariable String franchiseId,
+            @Valid @RequestBody UpdateNameRequest request) {
+        return FranchiseResponse.from(franchiseService.updateName(franchiseId, request.name()));
     }
 
     @GetMapping("/{franchiseId}/top-stock-products")
