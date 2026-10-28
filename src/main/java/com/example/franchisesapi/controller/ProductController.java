@@ -3,6 +3,7 @@ package com.example.franchisesapi.controller;
 import com.example.franchisesapi.config.OpenApiConfig;
 import com.example.franchisesapi.dto.CreateProductRequest;
 import com.example.franchisesapi.dto.ProductResponse;
+import com.example.franchisesapi.dto.UpdateNameRequest;
 import com.example.franchisesapi.dto.UpdateStockRequest;
 import com.example.franchisesapi.model.Product;
 import com.example.franchisesapi.service.ProductService;
@@ -109,6 +110,24 @@ public class ProductController {
             @PathVariable String productId,
             @Valid @RequestBody UpdateStockRequest request) {
         return ProductResponse.from(productService.updateStock(franchiseId, branchId, productId, request.stock()));
+    }
+
+    @PatchMapping("/{productId}/name")
+    @Operation(summary = "Modificar el nombre de un producto",
+            description = "El nuevo nombre debe ser único dentro de la sucursal, sin distinguir mayúsculas.")
+    @ApiResponse(responseCode = "200", description = "Nombre actualizado")
+    @ApiResponse(responseCode = "400", ref = OpenApiConfig.BAD_REQUEST_RESPONSE)
+    @ApiResponse(responseCode = "404", ref = OpenApiConfig.NOT_FOUND_RESPONSE)
+    @ApiResponse(responseCode = "409", ref = OpenApiConfig.CONFLICT_RESPONSE)
+    public ProductResponse updateName(
+            @Parameter(description = "Id de la franquicia", example = FRANCHISE_ID_EXAMPLE)
+            @PathVariable String franchiseId,
+            @Parameter(description = "Id de la sucursal", example = BRANCH_ID_EXAMPLE)
+            @PathVariable String branchId,
+            @Parameter(description = "Id del producto", example = PRODUCT_ID_EXAMPLE)
+            @PathVariable String productId,
+            @Valid @RequestBody UpdateNameRequest request) {
+        return ProductResponse.from(productService.updateName(franchiseId, branchId, productId, request.name()));
     }
 
 }

@@ -66,6 +66,12 @@ public class Branch {
                 .anyMatch(product -> product.getName().equalsIgnoreCase(productName));
     }
 
+    /** Para renombrar: busca el nombre en los demás productos, sin contar el que se renombra. */
+    public boolean hasOtherProductNamed(String productId, String productName) {
+        return products.stream()
+                .anyMatch(product -> !product.getId().equals(productId) && product.getName().equalsIgnoreCase(productName));
+    }
+
     public boolean hasProductWithSku(String sku) {
         return sku != null && products.stream()
                 .anyMatch(product -> sku.equalsIgnoreCase(product.getSku()));

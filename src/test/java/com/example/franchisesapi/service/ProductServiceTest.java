@@ -151,6 +151,35 @@ class ProductServiceTest {
         verify(franchiseRepository, never()).save(any());
     }
 
+    @Test
+    void updateNameStoresTheNormalizedNameAndTouchesUpdatedAt() {
+        Product updated = productService.updateName("f1", "b1", "p1", "  Papas a la francesa ");
+
+        assertThat(updated.getName()).isEqualTo("Papas a la francesa");
+        assertThat(updated.getSku()).isEqualTo("PAP-001");
+        assertThat(updated.getCreatedAt()).isEqualTo(CREATED);
+        assertThat(updated.getUpdatedAt()).isEqualTo(NOW);
+        verify(franchiseRepository).save(franchise);
+    }
+
+    @Test
+    void updateNameRejectsTheNameOfAnotherProduct() {
+        branch.getProducts().add(Product.builder().id("p2").name("Gaseosa").price(new BigDecimal("4500.00")).build());
+
+        assertThatThrownBy(() -> productService.updateName("f1", "b1", "p1", "gaseosa"))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Product 'gaseosa' already exists in branch 'Centro'");
+        verify(franchiseRepository, never()).save(any());
+    }
+
+    @Test
+    void updateNameOfUnknownProductFails() {
+        assertThatThrownBy(() -> productService.updateName("f1", "b1", "missing", "Papas"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Product 'missing' not found");
+        verify(franchiseRepository, never()).save(any());
+    }
+
     private static CreateProductRequest required(String name, BigDecimal price, int stock) {
         return new CreateProductRequest(name, null, null, null, price, null, stock, null, null);
     }

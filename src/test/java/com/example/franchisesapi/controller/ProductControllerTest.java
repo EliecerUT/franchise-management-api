@@ -204,4 +204,57 @@ class ProductControllerTest {
         verifyNoInteractions(productService);
     }
 
+    @Test
+    void updateNameReturns200WithTheRenamedProduct() throws Exception {
+        when(productService.updateName("f1", "b1", "p1", "Papas a la francesa")).thenReturn(Product.builder()
+                .id("p1").name("Papas a la francesa").price(new BigDecimal("7500")).stock(10).build());
+
+        mockMvc.perform(patch(PRODUCTS_URL + "/p1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Papas a la francesa"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("p1"))
+                .andExpect(jsonPath("$.name").value("Papas a la francesa"))
+                .andExpect(jsonPath("$.stock").value(10));
+    }
+
+    @Test
+    void updateNameWithTooLongNameReturns400() throws Exception {
+        mockMvc.perform(patch(PRODUCTS_URL + "/p1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"" + "x".repeat(101) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").exists());
+        verifyNoInteractions(productService);
+    }
+
+    @Test
+    void updateNameOfUnknownProductReturns404() throws Exception {
+        when(productService.updateName("f1", "b1", "missing", "Papas"))
+                .thenThrow(ResourceNotFoundException.product("missing"));
+
+        mockMvc.perform(patch(PRODUCTS_URL + "/missing/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Papas"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateNameToAnExistingNameReturns409() throws Exception {
+        when(productService.updateName("f1", "b1", "p1", "Gaseosa"))
+                .thenThrow(new DuplicateResourceException("Product 'Gaseosa' already exists in branch 'Centro'"));
+
+        mockMvc.perform(patch(PRODUCTS_URL + "/p1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Gaseosa"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Product 'Gaseosa' already exists in branch 'Centro'"));
+    }
+
 }
