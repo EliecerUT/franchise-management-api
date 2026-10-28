@@ -78,6 +78,22 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheProductEndpoints() throws Exception {
+        String products = "$.paths['/api/v1/franchises/{franchiseId}/branches/{branchId}/products";
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(products + "'].post.tags[0]").value("Productos"))
+                .andExpect(jsonPath(products + "'].post.responses['201'].headers.Location").exists())
+                .andExpect(jsonPath(products + "/{productId}'].delete.responses['204'].description")
+                        .value("Producto eliminado"))
+                .andExpect(jsonPath(products + "/{productId}/stock'].patch.responses['200']").exists())
+                .andExpect(jsonPath(products + "/{productId}/stock'].patch.responses['400'].$ref")
+                        .value("#/components/responses/BadRequest"))
+                .andExpect(jsonPath("$.components.schemas.CreateProductRequest.required")
+                        .value(hasItems("name", "price", "stock")))
+                .andExpect(jsonPath("$.components.schemas.ProductResponse.properties.lowStock.type").value("boolean"));
+    }
+
+    @Test
     void servesSwaggerUi() throws Exception {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk());
