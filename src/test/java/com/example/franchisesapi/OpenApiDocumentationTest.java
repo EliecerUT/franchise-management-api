@@ -65,6 +65,19 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheFranchiseRename() throws Exception {
+        String rename = "$.paths['/api/v1/franchises/{franchiseId}/name'].patch";
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(rename + ".tags[0]").value("Franquicias"))
+                .andExpect(jsonPath(rename + ".requestBody.content['application/json'].schema.$ref")
+                        .value("#/components/schemas/UpdateNameRequest"))
+                .andExpect(jsonPath(rename + ".responses['200'].content['application/json'].schema.$ref")
+                        .value("#/components/schemas/FranchiseResponse"))
+                .andExpect(jsonPath(rename + ".responses['409'].$ref").value("#/components/responses/Conflict"))
+                .andExpect(jsonPath("$.components.schemas.UpdateNameRequest.required").value(hasItems("name")));
+    }
+
+    @Test
     void documentsTheBranchEndpoints() throws Exception {
         String addBranch = "$.paths['/api/v1/franchises/{franchiseId}/branches'].post";
         mockMvc.perform(get("/v3/api-docs"))

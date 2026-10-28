@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -154,6 +155,59 @@ class FranchiseControllerTest {
 
         mockMvc.perform(get("/api/v1/franchises/missing"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateNameReturns200WithTheRenamedFranchise() throws Exception {
+        when(franchiseService.updateName("f1", "Burger House"))
+                .thenReturn(Franchise.builder().id("f1").name("Burger House").build());
+
+        mockMvc.perform(patch("/api/v1/franchises/f1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Burger House"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("f1"))
+                .andExpect(jsonPath("$.name").value("Burger House"));
+    }
+
+    @Test
+    void updateNameWithBlankNameReturns400() throws Exception {
+        mockMvc.perform(patch("/api/v1/franchises/f1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "  "}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").exists());
+        verifyNoInteractions(franchiseService);
+    }
+
+    @Test
+    void updateNameOfUnknownFranchiseReturns404() throws Exception {
+        when(franchiseService.updateName("missing", "Pizza")).thenThrow(ResourceNotFoundException.franchise("missing"));
+
+        mockMvc.perform(patch("/api/v1/franchises/missing/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Pizza"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateNameToAnExistingNameReturns409() throws Exception {
+        when(franchiseService.updateName("f1", "Pizza"))
+                .thenThrow(new DuplicateResourceException("Franchise 'Pizza' already exists"));
+
+        mockMvc.perform(patch("/api/v1/franchises/f1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Pizza"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Franchise 'Pizza' already exists"));
     }
 
     @Test

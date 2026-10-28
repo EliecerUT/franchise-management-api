@@ -94,6 +94,17 @@ class FranchiseRepositoryTest {
     }
 
     @Test
+    void existsByNameIgnoringTheFranchiseBeingRenamed() {
+        Franchise burger = repository.save(Franchise.builder().name("Burger").build());
+        Franchise pizza = repository.save(Franchise.builder().name("Pizza").build());
+
+        assertThat(repository.existsByNameIgnoreCaseAndIdNot("BURGER", burger.getId()))
+                .as("its own name does not count").isFalse();
+        assertThat(repository.existsByNameIgnoreCaseAndIdNot("burger", pizza.getId())).isTrue();
+        assertThat(repository.existsByNameIgnoreCaseAndIdNot("Tacos", burger.getId())).isFalse();
+    }
+
+    @Test
     void franchiseNameIsUniqueIgnoringCase() {
         repository.save(Franchise.builder().name("Burger").build());
 

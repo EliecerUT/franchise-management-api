@@ -87,6 +87,40 @@ class FranchiseServiceTest {
     }
 
     @Test
+    void updateNameStoresTheNormalizedName() {
+        Franchise franchise = Franchise.builder().id("f1").name("Burger").build();
+        when(franchiseRepository.findById("f1")).thenReturn(Optional.of(franchise));
+        when(franchiseRepository.existsByNameIgnoreCaseAndIdNot("Burger House", "f1")).thenReturn(false);
+        when(franchiseRepository.save(franchise)).thenReturn(franchise);
+
+        Franchise updated = franchiseService.updateName("f1", "  Burger House ");
+
+        assertThat(updated.getName()).isEqualTo("Burger House");
+        verify(franchiseRepository).save(franchise);
+    }
+
+    @Test
+    void updateNameRejectsTheNameOfAnotherFranchise() {
+        when(franchiseRepository.findById("f1"))
+                .thenReturn(Optional.of(Franchise.builder().id("f1").name("Burger").build()));
+        when(franchiseRepository.existsByNameIgnoreCaseAndIdNot("Pizza", "f1")).thenReturn(true);
+
+        assertThatThrownBy(() -> franchiseService.updateName("f1", "Pizza"))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Franchise 'Pizza' already exists");
+        verify(franchiseRepository, never()).save(any());
+    }
+
+    @Test
+    void updateNameOfUnknownFranchiseThrows() {
+        when(franchiseRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> franchiseService.updateName("missing", "Pizza"))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verify(franchiseRepository, never()).save(any());
+    }
+
+    @Test
     void getTopStockProductsReturnsOneProductPerBranchSkippingEmptyBranches() {
         Branch center = Branch.builder().id("b1").code("BOG-001").name("Centro").products(List.of(
                 Product.builder().id("p1").sku("PAP-001").name("Papas").category("Acompañamientos")
