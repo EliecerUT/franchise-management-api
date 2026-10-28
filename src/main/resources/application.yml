@@ -4,6 +4,13 @@ spring:
   mongodb:
     # Se puede sobrescribir con la variable de entorno MONGODB_URI (p. ej. un cluster en la nube)
     uri: ${MONGODB_URI:mongodb://localhost:27017/franchises}
+  data:
+    mongodb:
+      # Crea al arrancar los índices declarados con @Indexed (nombre y NIT de franquicia únicos)
+      auto-index-creation: true
+      representation:
+        # Guarda los BigDecimal (precios) como Decimal128 y no como texto
+        big-decimal: decimal128
 
 server:
   port: ${PORT:8080}
@@ -11,3 +18,6 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+  # Los errores se documentan endpoint por endpoint (ver OpenApiConfig), no de forma genérica
+  override-with-generic-response: false
+  default-produces-media-type: application/json
