@@ -65,6 +65,19 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheBranchEndpoints() throws Exception {
+        String addBranch = "$.paths['/api/v1/franchises/{franchiseId}/branches'].post";
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(addBranch + ".tags[0]").value("Sucursales"))
+                .andExpect(jsonPath(addBranch + ".parameters[0].description").value("Id de la franquicia"))
+                .andExpect(jsonPath(addBranch + ".responses['201'].headers.Location").exists())
+                .andExpect(jsonPath(addBranch + ".responses['422'].$ref").value("#/components/responses/UnprocessableContent"))
+                .andExpect(jsonPath("$.components.schemas.AddressRequest.required").value(hasItems("city", "country")))
+                .andExpect(jsonPath("$.components.schemas.CreateBranchRequest.properties.status.enum")
+                        .value(hasItems("OPEN", "TEMPORARILY_CLOSED", "CLOSED")));
+    }
+
+    @Test
     void servesSwaggerUi() throws Exception {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk());
