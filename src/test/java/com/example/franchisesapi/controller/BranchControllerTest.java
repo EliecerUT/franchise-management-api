@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -164,6 +165,59 @@ class BranchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Centro"))
                 .andExpect(jsonPath("$.status").value("TEMPORARILY_CLOSED"));
+    }
+
+    @Test
+    void updateNameReturns200WithTheRenamedBranch() throws Exception {
+        when(branchService.updateName("f1", "b1", "Centro Histórico"))
+                .thenReturn(Branch.builder().id("b1").name("Centro Histórico").build());
+
+        mockMvc.perform(patch(BRANCHES_URL + "/b1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Centro Histórico"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("b1"))
+                .andExpect(jsonPath("$.name").value("Centro Histórico"));
+    }
+
+    @Test
+    void updateNameWithBlankNameReturns400() throws Exception {
+        mockMvc.perform(patch(BRANCHES_URL + "/b1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": ""}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").exists());
+        verifyNoInteractions(branchService);
+    }
+
+    @Test
+    void updateNameOfUnknownBranchReturns404() throws Exception {
+        when(branchService.updateName("f1", "missing", "Centro")).thenThrow(ResourceNotFoundException.branch("missing"));
+
+        mockMvc.perform(patch(BRANCHES_URL + "/missing/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Centro"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateNameToAnExistingNameReturns409() throws Exception {
+        when(branchService.updateName("f1", "b1", "Norte"))
+                .thenThrow(new DuplicateResourceException("Branch 'Norte' already exists in franchise 'Burger'"));
+
+        mockMvc.perform(patch(BRANCHES_URL + "/b1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Norte"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Branch 'Norte' already exists in franchise 'Burger'"));
     }
 
 }
