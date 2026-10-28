@@ -1,0 +1,10 @@
+# Solo se envía a Docker lo que necesita el Dockerfile
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+*.md
+Dockerfile
+docker-compose.yml
+.dockerignore

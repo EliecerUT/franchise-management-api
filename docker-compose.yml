@@ -1,0 +1,29 @@
+# Levanta la API y MongoDB juntos: docker compose up --build
+services:
+
+  mongo:
+    image: mongo:8.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/franchises
+    depends_on:
+      mongo:
+        # Espera a que MongoDB responda antes de arrancar la API
+        condition: service_healthy
+
+# Los datos de MongoDB sobreviven a "docker compose down" (se borran con "down -v")
+volumes:
+  mongo-data:
