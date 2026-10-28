@@ -69,6 +69,19 @@ class FranchiseTest {
     }
 
     @Test
+    void otherProductNamedSkipsTheProductBeingRenamed() {
+        Branch branch = Branch.builder().id("b1").name("Centro")
+                .products(List.of(
+                        Product.builder().id("p1").name("Hamburguesa").build(),
+                        Product.builder().id("p2").name("Papas").build()))
+                .build();
+
+        assertThat(branch.hasOtherProductNamed("p1", "HAMBURGUESA")).as("its own name does not count").isFalse();
+        assertThat(branch.hasOtherProductNamed("p1", "papas")).isTrue();
+        assertThat(branch.hasOtherProductNamed("p1", "Gaseosa")).isFalse();
+    }
+
+    @Test
     void productNameAndSkuChecksIgnoreCase() {
         Branch branch = Branch.builder().id("b1").name("Centro")
                 .products(List.of(Product.builder().id("p1").sku("HAM-001").name("Hamburguesa").build()))

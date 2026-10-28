@@ -93,6 +93,26 @@ public class ProductService {
         return product;
     }
 
+    /**
+     * Cambia el nombre del producto. Se permite cambiar solo las mayúsculas del propio nombre,
+     * pero no usar el de otro producto de la misma sucursal.
+     */
+    public Product updateName(String franchiseId, String branchId, String productId, String newName) {
+        Franchise franchise = franchiseService.getById(franchiseId);
+        Branch branch = findBranch(franchise, branchId);
+        Product product = findProduct(branch, productId);
+        String name = text(newName);
+        if (branch.hasOtherProductNamed(productId, name)) {
+            throw new DuplicateResourceException(
+                    "Product '%s' already exists in branch '%s'".formatted(name, branch.getName()));
+        }
+
+        product.setName(name);
+        product.setUpdatedAt(Instant.now(clock));
+        franchiseRepository.save(franchise);
+        return product;
+    }
+
     private Branch findBranch(Franchise franchise, String branchId) {
         return franchise.findBranch(branchId)
                 .orElseThrow(() -> ResourceNotFoundException.branch(branchId));

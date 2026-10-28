@@ -210,6 +210,35 @@ class FranchisesApiIntegrationTest {
     }
 
     @Test
+    void renamingAProductKeepsItsStockAndPrice() {
+        FranchiseResponse franchise = createFranchise(franchiseNamed("Burger"));
+        BranchResponse center = createBranch(FRANCHISES + "/" + franchise.id(), branchNamed("Centro", null));
+        String productsUrl = FRANCHISES + "/" + franchise.id() + "/branches/" + center.id() + "/products";
+        ProductResponse fries = createProduct(productsUrl, product("Papas", "PAP-001", "7500.00", 10));
+        createProduct(productsUrl, product("Gaseosa", "GAS-001", "4500.00", 30));
+
+        client.patch().uri(productsUrl + "/" + fries.id() + "/name")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("Papas a la francesa"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.name").isEqualTo("Papas a la francesa")
+                .jsonPath("$.sku").isEqualTo("PAP-001")
+                .jsonPath("$.stock").isEqualTo(10);
+        client.patch().uri(productsUrl + "/" + fries.id() + "/name")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateNameRequest("GASEOSA"))
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        Product stored = franchiseRepository.findById(franchise.id()).orElseThrow()
+                .findBranch(center.id()).orElseThrow().findProduct(fries.id()).orElseThrow();
+        assertThat(stored.getName()).isEqualTo("Papas a la francesa");
+        assertThat(stored.getPrice()).isEqualByComparingTo("7500.00");
+    }
+
+    @Test
     void closedBranchDoesNotAcceptProducts() {
         FranchiseResponse franchise = createFranchise(franchiseNamed("Burger"));
         BranchResponse closed = createBranch(FRANCHISES + "/" + franchise.id(),

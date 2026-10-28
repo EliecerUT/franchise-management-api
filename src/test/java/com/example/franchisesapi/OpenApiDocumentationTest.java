@@ -120,6 +120,19 @@ class OpenApiDocumentationTest {
     }
 
     @Test
+    void documentsTheProductRename() throws Exception {
+        String rename = "$.paths['/api/v1/franchises/{franchiseId}/branches/{branchId}/products/{productId}/name'].patch";
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(rename + ".tags[0]").value("Productos"))
+                .andExpect(jsonPath(rename + ".requestBody.content['application/json'].schema.$ref")
+                        .value("#/components/schemas/UpdateNameRequest"))
+                .andExpect(jsonPath(rename + ".responses['200'].content['application/json'].schema.$ref")
+                        .value("#/components/schemas/ProductResponse"))
+                .andExpect(jsonPath(rename + ".responses['404'].$ref").value("#/components/responses/NotFound"))
+                .andExpect(jsonPath(rename + ".responses['409'].$ref").value("#/components/responses/Conflict"));
+    }
+
+    @Test
     void documentsTheTopStockReport() throws Exception {
         String report = "$.paths['/api/v1/franchises/{franchiseId}/top-stock-products'].get";
         mockMvc.perform(get("/v3/api-docs"))
