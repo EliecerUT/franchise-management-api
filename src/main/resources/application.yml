@@ -18,3 +18,6 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+  # Los errores se documentan endpoint por endpoint (ver OpenApiConfig), no de forma genérica
+  override-with-generic-response: false
+  default-produces-media-type: application/json
